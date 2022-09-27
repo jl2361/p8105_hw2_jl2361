@@ -1,0 +1,11 @@
+---
+title: "P8105 HW2"
+author: "Jennifer Lee (UNI: jl2361)"
+output: github_document
+---
+
+We will load the tidyverse.
+```{r}
+library(tidyverse)
+```
+
