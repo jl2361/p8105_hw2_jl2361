@@ -9,3 +9,19 @@ We will load the tidyverse.
 library(tidyverse)
 ```
 
+# Problem 1
+```{r}
+nyctransit = read_csv('data/NYC_Transit.csv') %>%
+  janitor::clean_names() %>%
+  select(line, station_name, station_latitude, station_longitude, starts_with('route'), entrance_type, entry, vending, ada) %>%
+  mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE),
+         across(where(is.character), tolower))
+
+head(nyctransit)
+```
+
+```{r}
+distinct(nyctransit, line, station_name)
+sum(pull(nyctransit, ada), na.rm = TRUE)
+```
+
