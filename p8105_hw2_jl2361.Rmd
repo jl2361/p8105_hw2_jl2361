@@ -98,6 +98,8 @@ polsmonth = read_csv('data/fivethirtyeight_polsmonth.csv') %>%
     president = recode(prez_gop, '1' = "gop", '0' = "dem")) %>%
   select(-prez_dem, -prez_gop, -day) %>%
   arrange(year, month)
+
+head(polsmonth)
 ```
 
 ```{r}
@@ -113,6 +115,9 @@ snp = read_csv('data/fivethirtyeight_snp.csv') %>%
     month = recode(month, '1' = "jan", '2' = "feb", '3' = "mar", '4' = "apr", '5' = "may", '6' = "jun", '7' = "jul", '8' = "aug", '9' = "sep", '10' = "oct", '11' = "nov", '12' = "dec")) %>%
   select(-day) %>%
     arrange(year, month)
+
+head(snp)
+summary(snp)
 ```
 
 ```{r}
@@ -125,10 +130,16 @@ unemploy = read_csv('data/fivethirtyeight_unemployment.csv') %>%
     names_to = "month",
     values_to = "unemployment") %>%
     arrange(year, month)
+
+head(unemploy)
+summary(unemploy)
 ```
 
 ```{r}
 pol_snp = left_join(polsmonth, snp, by = c("year", "month"))
 unemploy_pol_snp = left_join(pol_snp, unemploy, by = c("year", "month"))
+
+head(unemploy_pol_snp)
+summary(unemploy_pol_snp)
 ```
 
