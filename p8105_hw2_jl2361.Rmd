@@ -4,16 +4,17 @@ author: "Jennifer Lee (UNI: jl2361)"
 output: github_document
 ---
 
-We will load the tidyverse.
-```{r}
+We will first load the tidyverse.
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
 # Problem 1
 ```{r}
-nyctransit = read_csv('data/NYC_Transit.csv') %>%
+nyctransit = read_csv('data/NYC_Transit.csv', col_types = cols(Route8 = "c", Route9 = "c", Route10 = "c", Route11 = "c", ADA = "c")) %>%
   janitor::clean_names() %>%
-  select(line, station_name, station_latitude, station_longitude, starts_with('route'), entrance_type, entry, vending, ada) %>%
+  select(line, station_name, station_latitude, station_longitude, starts_with('route'), entrance_type, entry, exit_only, vending, ada) %>%
   mutate(entry = recode(entry, 'YES' = TRUE, 'NO' = FALSE),
          across(where(is.character), tolower))
 
@@ -21,7 +22,113 @@ head(nyctransit)
 ```
 
 ```{r}
-distinct(nyctransit, line, station_name)
-sum(pull(nyctransit, ada), na.rm = TRUE)
+nrow(distinct(nyctransit, line, station_name))
+
+nrow(distinct(filter(nyctransit, ada == 'true'), line, station_name, .keep_all = TRUE))
+
+round(nrow(filter(nyctransit, vending == 'no', entry == TRUE)) / nrow(nyctransit) * 100, digits = 2)
+```
+
+```{r}
+nyctransitreformat = 
+  pivot_longer(
+    nyctransit, 
+    route1:route11,
+    names_to = "route_number",
+    values_to = "route_name",
+    names_prefix = 'route') 
+```
+
+```{r}
+nrow(distinct(filter(nyctransitreformat, route_name == 'a'), line, station_name, .keep_all = TRUE))
+
+nrow(distinct(filter(nyctransitreformat, route_name == 'a', ada == 'true'), line, station_name, .keep_all = TRUE))
+```
+
+# Problem 2
+
+```{r}
+mr_trashwheel = readxl::read_excel('data/Trash_Wheel.xlsx', 
+                                   sheet = 1, 
+                                   range = 'A2:N534') %>%
+  janitor::clean_names() %>%
+  drop_na(dumpster) %>%
+  mutate(
+    sports_balls = as.integer(round(sports_balls, digit = 0)),
+    id = paste('mr', row_number(), sep = '_')) %>%
+    relocate(id)
+
+professor_trashwheel = readxl::read_excel('data/Trash_Wheel.xlsx', 
+                                   sheet = 2, 
+                                   range = 'A2:N116') %>%
+  janitor::clean_names() %>%
+  drop_na(dumpster) %>%
+  mutate(
+    sports_balls = as.integer(round(sports_balls, digit = 0)),
+    id = paste('prof', row_number(), sep = '_')) %>%
+    relocate(id)
+
+total_trashwheel = bind_rows(mr_trashwheel, professor_trashwheel)
+
+head(total_trashwheel)
+nrow(total_trashwheel)
+summary(mr_trashwheel)
+summary(professor_trashwheel)
+summary(total_trashwheel)
+```
+
+```{r}
+sum(pull(professor_trashwheel, weight_tons))
+
+mr_trashwheel2020 = filter(mr_trashwheel, year == 2020) 
+sum(pull(mr_trashwheel2020, sports_balls))
+```
+
+# Problem 3 
+
+```{r}
+polsmonth = read_csv('data/fivethirtyeight_polsmonth.csv') %>%
+  janitor::clean_names() %>%
+  separate(col = mon, into = c('year', 'month', 'day'), sep = "-") %>%
+  mutate(
+    year = as.integer(year), 
+    month = as.integer(month),
+    day = as.integer(day),
+    month = recode(month, '1' = "jan", '2' = "feb", '3' = "mar", '4' = "apr", '5' = "may", '6' = "jun", '7' = "jul", '8' = "aug", '9' = "sep", '10' = "oct", '11' = "nov", '12' = "dec"),
+    president = recode(prez_gop, '1' = "gop", '0' = "dem")) %>%
+  select(-prez_dem, -prez_gop, -day) %>%
+  arrange(year, month)
+```
+
+```{r}
+snp = read_csv('data/fivethirtyeight_snp.csv') %>%
+  janitor::clean_names() %>%
+  mutate(
+    date = as.Date(date, format = "%m/%d/%y")) %>%
+  separate(col = date, into = c('year', 'month', 'day'), sep = "-") %>%
+  mutate(
+    year = as.integer(year), 
+    month = as.integer(month),
+    day = as.integer(day),
+    month = recode(month, '1' = "jan", '2' = "feb", '3' = "mar", '4' = "apr", '5' = "may", '6' = "jun", '7' = "jul", '8' = "aug", '9' = "sep", '10' = "oct", '11' = "nov", '12' = "dec")) %>%
+  select(-day) %>%
+    arrange(year, month)
+```
+
+```{r}
+unemploy = read_csv('data/fivethirtyeight_unemployment.csv') %>%
+  janitor::clean_names() %>%
+  mutate(
+    year = as.integer(year)) %>%
+  pivot_longer(
+    jan:dec,
+    names_to = "month",
+    values_to = "unemployment") %>%
+    arrange(year, month)
+```
+
+```{r}
+pol_snp = left_join(polsmonth, snp, by = c("year", "month"))
+unemploy_pol_snp = left_join(pol_snp, unemploy, by = c("year", "month"))
 ```
 
